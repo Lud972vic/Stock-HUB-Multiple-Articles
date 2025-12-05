@@ -1,0 +1,155 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .hero { position: relative; background: rgba(255,255,255,.88); border: 1px solid #e7ecf6; border-radius: 16px; padding: 28px; margin-bottom: 18px; box-shadow: 0 1px 0 rgba(0,0,0,.02); overflow:hidden; }
+    .hero::before { content:''; position:absolute; inset:0; background: url('/images/store.jpg') center/cover no-repeat; filter: blur(4px); transform: scale(1.05); z-index:0; }
+    .hero::after { content:''; position:absolute; left:18px; right:18px; bottom:12px; height:4px; background: linear-gradient(90deg, var(--brand-blue), var(--brand-red)); border-radius: 3px; opacity:.35; z-index:1 }
+    .hero > * { position: relative; z-index:2; }
+    .kpi-card { border: 1px solid #e7ecf6; border-radius: 14px; padding: 18px; background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,.02); }
+    .kpi-title { font-size: .85rem; color: #556; display:flex; align-items:center; gap:8px }
+    .kpi-title .bi { color: var(--brand-blue); }
+    .kpi-value { font-size: 2.2rem; line-height: 1; color: #001a44; }
+    .section-card { border: 1px solid #e7ecf6; border-radius: 12px; }
+    .section-header { padding: 12px 16px; border-bottom: 1px solid #eef2fb; }
+    .section-header .h5 { margin: 0; font-size: 1rem; color: #001a44; }
+    .section-body { padding: 12px 12px; }
+    .table thead th { font-weight:600; color:#223; }
+    .progress { background:#fff; border: 1px solid #eef2fb; }
+    .progress-bar { background: linear-gradient(90deg, var(--brand-red), #ff6f7b); }
+    .table-modern { border:1px solid #e7ecf6; border-radius:12px; background:#fff; overflow:hidden; }
+    .table-modern thead th { background: linear-gradient(0deg,#f8fafc,#fff); font-weight:600; color:#001a44; padding:10px; }
+    .table-modern tbody td { padding:10px 12px; }
+    .table-modern tbody tr:hover { background:#f9fbff; }
+    .cell-num { font-variant-numeric: tabular-nums; }
+    .badge-qty { background:#fff; border:1px solid #e7ecf6; color:#001a44; }
+    .table-bg { position: relative; border-radius: 12px; overflow: hidden; }
+    .table-bg::before { content:''; position:absolute; inset:0; background: url('/images/warehouse-bg.jpg') center/cover no-repeat; filter: blur(4px); transform: scale(1.05); opacity:.35; z-index:0; }
+    .table-bg > * { position: relative; z-index: 1; }
+  </style>
+{% endblock %}
+
+{% block body %}
+<div class="hero">
+  <div class="row g-2 align-items-stretch">
+    <div class="col-lg-3 col-6"><div class="kpi-card h-100"><div class="kpi-title"><i class="bi bi-buildings"></i> Fournisseurs</div><div class="kpi-value">{{ count_fournisseurs }}</div></div></div>
+    <div class="col-lg-3 col-6"><div class="kpi-card h-100"><div class="kpi-title"><i class="bi bi-box-seam"></i> Matériels</div><div class="kpi-value">{{ count_materiels }}</div></div></div>
+    <div class="col-lg-3 col-6"><div class="kpi-card h-100"><div class="kpi-title"><i class="bi bi-shop"></i> Magasins</div><div class="kpi-value">{{ count_magasins }}</div></div></div>
+    <div class="col-lg-3 col-6"><div class="kpi-card h-100"><div class="kpi-title"><i class="bi bi-arrow-left-right"></i> Mouvements</div><div class="kpi-value">{{ count_mouvements }}</div></div></div>
+  </div>
+</div>
+
+{# section supprimée: actions rapides désormais en navbar #}
+
+<div class="section-card mt-3">
+  <div class="section-header d-flex align-items-center justify-content-between"><div class="h5">Stock central</div></div>
+  <div class="section-body">
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="table-bg">
+      <div class="table-responsive">
+        <table class="table table-modern table-hover align-middle" style="background:transparent">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Matériel</th>
+              <th>Fournisseur</th>
+              <th class="text-end">Quantité</th>
+              <th class="text-end">Qté sortie</th>
+              <th class="text-end">VU HT</th>
+              <th class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in stocks_materiels|slice(0, 100) %}
+              {% set low = s.quantite <= 5 %}
+              {% set ratio = s.sortie > 0 and (s.quantite + s.sortie) > 0 ? (s.sortie / (s.quantite + s.sortie) * 100) : 0 %}
+              <tr>
+                <td><span class="badge badge-code">{{ s.code }}</span></td>
+                <td>
+                  {{ s.nom }} <br> 
+                  <span class="badge badge-code">{{ s.description }}</span> <br>
+                  {% if low %}
+                    <span class="badge text-bg-danger">Stock faible</span>
+                  {% endif %}
+                </td>
+                <td><span class="badge badge-code">{{ s.fournisseur ?? '—' }}</span></td>
+                <td class="text-end text-nowrap cell-num">{{ s.quantite|number_format(0, ',', ' ') }}</td>
+                <td class="text-end text-nowrap cell-num"><span class="badge badge-qty">{{ s.sortie|number_format(0, ',', ' ') }}</span></td>
+                <td class="text-end text-nowrap cell-num">{{ s.vuht|number_format(2, ',', ' ') }} €</td>
+                <td class="text-end text-nowrap cell-num">{{ s.total|number_format(2, ',', ' ') }} €
+                  <div class="progress" style="height:4px;" title="Sorties vs total">
+                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ ratio|round(0, 'floor') }}%"></div>
+                  </div>
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="7" class="text-muted">Aucun stock central</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="table-bg">
+      <div class="table-responsive">
+        <table class="table table-modern table-hover align-middle" style="background:transparent">
+          <thead>
+            <tr>
+              <th>Fournisseur</th>
+              <th class="text-end">Qté stock</th>
+              <th class="text-end">Total stock</th>
+              <th class="text-end">Qté sortie</th>
+              <th class="text-end">Total sortie</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for nom, sf in stocks_fournisseurs %}
+              <tr>
+                <td>{{ nom }}</td>
+                <td class="text-end cell-num">{{ sf.quantite_stock|number_format(0, ',', ' ') }}</td>
+                <td class="text-end text-nowrap cell-num">{{ sf.total_stock|number_format(2, ',', ' ') }} €</td>
+                <td class="text-end cell-num"><span class="badge badge-qty">{{ sf.quantite_sortie|number_format(0, ',', ' ') }}</span></td>
+                <td class="text-end text-nowrap cell-num">{{ sf.total_sortie|number_format(2, ',', ' ') }} €</td>
+              </tr>
+            {% else %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      </div>
+      <div class="mt-2 text-end">
+        <span class="fw-semibold">Valeur totale stock</span>
+        <span class="badge badge-code">{{ stocks_total_valeur|number_format(2, ',', ' ') }} €</span>
+      </div>
+      <div class="mt-2 text-end">
+        <span class="fw-semibold">Valeur totale sortie</span>
+        <span class="badge badge-code">{{ stocks_total_sortie_valeur|number_format(2, ',', ' ') }} €</span>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    Swal.fire({
+      title: 'Bienvenue sur StockHUB 2025/26',
+      html: 'Pour toute demande, merci de contacter Ludovic (Developer Data NIT)',
+      icon: 'success',
+      toast: true,
+      position: 'top-end',
+      timer: 6000,
+      timerProgressBar: true,
+      showConfirmButton: false,
+      showCloseButton: true,
+      background: '#ffffff',
+      iconHtml: '&#128079',
+      customClass: { popup: 'shadow-lg rounded-4' }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}Welcome!{% endblock %}</title>
+        <link rel="icon" type="image/png" href="/logo/aldi-logo.png">
+        {% block stylesheets %}
+            <link rel="stylesheet" href="/css/bootstrap.min.css">
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+              <style>
+                html, body { height: 100%; }
+                :root {
+                  --brand-blue: #001a44;
+                  --brand-red: #e30613;
+                  --brand-white: #ffffff;
+
+                  --bs-primary: var(--brand-blue);
+                  --bs-secondary: var(--brand-blue);
+                  --bs-info: var(--brand-blue);
+                  --bs-success: var(--brand-blue);
+                  --bs-warning: var(--brand-red);
+                  --bs-danger: var(--brand-red);
+                  --bs-link-color: var(--brand-blue);
+                }
+                body { background: linear-gradient(rgba(255,255,255,.85), rgba(255,255,255,.85)), url('/images/store.jpg'); background-size: cover; background-position: center; background-attachment: fixed; min-height: 100vh; display: flex; flex-direction: column; }
+                main.container { flex: 1 0 auto; }
+                .navbar { background-color: var(--brand-blue) !important; }
+                .navbar .navbar-brand { color: #fff; }
+                .navbar .navbar-brand:hover { color: #fff; }
+                .navbar .btn-light.text-primary { color: var(--brand-blue) !important; }
+                .navbar .btn-light.text-primary:hover { background-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.6) inset; }
+                .badge.text-bg-secondary { background-color: var(--brand-blue) !important; }
+                .badge-code { background-color: #eef3fb; color: var(--brand-blue); border: 1px solid #cdd6ea; }
+                .navbar-brand img { height: 28px; width: auto; margin-right: 8px; vertical-align: middle; }
+                footer.footer { position: relative; background: linear-gradient(0deg, #001a44, #0f2a66); color: #fff; border-top: none; }
+                footer.footer::before { content:''; position:absolute; left:0; right:0; top:0; height:4px; background: linear-gradient(90deg, var(--brand-blue), var(--brand-red)); opacity:.65; }
+                footer .tech { font-size: .9rem; }
+                footer .tech .badge { margin-right: 6px; background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.25); }
+                footer .brand { font-weight: 600; letter-spacing: .2px; }
+                footer .bi { color: #fff; }
+                footer a.btn-outline-light { border-color: rgba(255,255,255,.7); }
+                footer a.btn-outline-light:hover { background:#fff; color:#001a44; }
+                
+              </style>
+        {% endblock %}
+
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% endblock %}
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="/">
+                  <img src="/logo/aldi-logo.png" alt="Logo">
+                  <span>StockHUB</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarMain">
+                  <ul class="navbar-nav me-auto align-items-center gap-2">
+                    <li class="nav-item"><a class="nav-link" href="{{ path('app_fournisseur_index') }}"><i class="bi bi-people"></i> Fournisseurs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('app_materiel_index') }}"><i class="bi bi-box-seam"></i> Matériels</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('app_magasin_index') }}"><i class="bi bi-shop"></i> Magasins</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('app_stock_magasin_index') }}"><i class="bi bi-list-check"></i> Stock Magasins</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('app_mouvement_index') }}"><i class="bi bi-arrow-left-right"></i> Mouvements</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('app_help') }}"><i class="bi bi-question-circle"></i> Aide</a></li>
+                  </ul>
+                </div>
+            </div>
+        </nav>
+        <main class="container-fluid p-5">
+            {% block body %}{% endblock %}
+        </main>
+        <footer class="footer mt-auto py-4">
+          <div class="container">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+              <div class="brand d-flex align-items-center gap-2">
+                <i class="bi bi-lightning-charge"></i>
+                <span>StockHUB</span>
+                <span class="text-white-50">© {{ "now"|date("Y") }}</span>
+              </div>
+              <div class="tech">
+                <span class="badge" data-bs-toggle="tooltip" title="Langage serveur exécutant l’application. Version 8.2 apporte performances et types modernes.">PHP 8.2</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Framework web pour MVC, dépendances et routing. Offre sécurité et outillage robuste.">Symfony 7.3</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Moteur de templates. Sépare la présentation du back‑end avec une syntaxe sûre.">Twig</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Mappe les entités PHP à la base. Simplifie requêtes, transactions et relations.">Doctrine ORM</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Gère l’évolution du schéma. Versionne et automatise les changements BD.">Doctrine Migrations</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Micro‑framework JS côté DOM. Ajoute des comportements légers et progressifs.">Stimulus</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Navigation rapide sans rechargement complet. Formulaires et liens plus réactifs.">Turbo</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Mappe et sert les assets sans bundler. Simplifie la distribution des fichiers.">Asset Mapper</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Charge des modules JS via CDN ou assets. Fonctionne sans outil de build.">Importmap</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Framework CSS pour layout et composants. Assure un design responsive et cohérent.">Bootstrap</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Pack d’icônes SVG pour l’UI. Intégration simple avec Bootstrap.">Bootstrap Icons</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Popups élégants pour feedbacks. Utilisé pour toasts et confirmations.">SweetAlert2</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Journalisation des événements. Centralise les logs avec niveaux.">Monolog</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Outillage en ligne de commande. Exécute des tâches et scripts applicatifs.">Console</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Tests unitaires et fonctionnels. Sécurise les évolutions du code.">PHPUnit</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Barre de debug et profils détaillés. Diagnostic des requêtes et des vues.">Web Profiler</span>
+                <span class="badge" data-bs-toggle="tooltip" title="Base de données relationnelle. Stocke et requête les données du projet.">MariaDB/MySQL</span>
+              </div>
+              <div>
+                <a class="btn btn-outline-warning btn-sm" href="https://github.com/lud972vic" target="_blank" rel="noopener">
+                  Ludovic mon <i class="bi bi-github"></i> GitHub
+                </a>
+              </div>
+            </div>
+          </div>
+        </footer>
+    </body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function(){
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function(el){ new bootstrap.Tooltip(el); });
+      });
+      {% for label, messages in app.flashes %}
+        {% for message in messages %}
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 4000,
+            icon: '{{ label == 'success' ? 'success' : (label == 'danger' ? 'error' : (label == 'warning' ? 'warning' : 'info')) }}',
+            title: '{{ message|e('js') }}'
+          });
+        {% endfor %}
+      {% endfor %}
+
+      document.addEventListener('click', function(e){
+        var btn = e.target.closest('.js-delete-btn');
+        if (!btn) return;
+        e.preventDefault();
+        var form = btn.closest('form');
+        Swal.fire({
+          title: 'Confirmer la suppression',
+          text: 'Cette action est irréversible.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Oui, supprimer',
+          cancelButtonText: 'Annuler'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            form.submit();
+          }
+        });
+      });
+
+    </script>
+  </body>
+  </html>

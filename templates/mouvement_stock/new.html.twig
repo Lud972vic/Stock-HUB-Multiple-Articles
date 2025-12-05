@@ -1,0 +1,221 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ is_edit ? 'Modifier Mouvement' : 'Nouveau Mouvement' }}{% endblock %}
+
+{% block javascripts %}
+{#
+  Flux
+  - Pilotage de la page "Enregistrer un mouvement" en mode liste
+  - Fixe l'action (ajout/retour/central), montre/cache le champ magasin
+  - Met à jour les indicateurs de stock par article (central/magasin)
+
+  Validation
+  - Les champs quantité reçoivent un `max` différent selon l'action:
+    * ajout (SORTIE vers magasin): max = stock central
+    * retour (ENTREE depuis magasin): max = stock magasin
+    * central: pas de max imposé
+
+  API
+  - Stock central: route `app_mouvement_stock_for_materiel` → GET /mouvements/stock/{id}
+  - Stock magasin: route `app_mouvement_stock_magasin` → GET /mouvements/stock-magasin/{magasinId}/{materielId}
+ #}
+<script>
+  document.addEventListener('DOMContentLoaded', function() { // exécute le script une fois le DOM prêt
+    const typeMouvementSelect = document.getElementById('{{ form.typeMouvement.vars.id }}'); // select du type de mouvement
+    const magasinSelect = document.getElementById('{{ form.magasin.vars.id }}'); // select du magasin
+    const magasinGroupEl = document.getElementById('{{ form.magasin.vars.id }}'); // élément du champ magasin
+    const magasinGroup = magasinGroupEl.closest('[data-field="magasin"]') || magasinGroupEl.closest('.col-12') || magasinGroupEl.parentElement; // conteneur visuel du champ
+    const actionInput = document.getElementById('formAction'); // input caché stockant l'action courante
+
+    function setBadgeColor(el, val) {
+      if (!el) return;
+      el.classList.remove('bg-secondary', 'bg-primary', 'bg-danger');
+      el.classList.add(val > 0 ? 'bg-primary' : 'bg-dark');
+    }
+
+    // Fixe l'action courante et adapte l'UI (type, champ magasin)
+    function setAction(action) { // fixe l'action et ajuste l'UI
+      if (!actionInput) return; // garde-fou si l'input n'existe pas
+      actionInput.value = action; // mémorise l'action ('retour' | 'ajout' | 'central')
+      if (action === 'retour') { // cas retour magasin → ENTREE
+        typeMouvementSelect.value = 'ENTREE'; // ENTREE sur le central
+        magasinGroup.style.display = 'block'; // montre le champ magasin
+        magasinSelect.required = true; // magasin obligatoire
+        magasinSelect.disabled = false; // champ activé
+      } else if (action === 'ajout') { // cas ajout vers magasin → SORTIE
+        typeMouvementSelect.value = 'SORTIE'; // SORTIE depuis le central
+        magasinGroup.style.display = 'block'; // montre le champ magasin
+        magasinSelect.required = true; // magasin obligatoire
+        magasinSelect.disabled = false; // champ activé
+      } else { // cas approvisionnement central
+        typeMouvementSelect.value = 'ENTREE'; // ENTREE sur le central
+        magasinGroup.style.display = 'none'; // cache le champ magasin
+        magasinSelect.required = false; // magasin non requis
+        magasinSelect.disabled = true; // champ désactivé
+        magasinSelect.value = ''; // réinitialise la sélection
+      }
+    }
+
+    // Flux — Met à jour les indicateurs de stock (central et magasin) et les `max` des inputs
+    function updateStocks() {
+      const action = actionInput.value || ''; // action courante ('ajout' | 'retour' | 'central')
+      const gid = magasinSelect && !magasinSelect.disabled ? magasinSelect.value : ''; // id du magasin sélectionné si champ actif, sinon chaîne vide
+      const rows = document.querySelectorAll('tr[data-mat-id]'); // collection des lignes du tableau (une par article)
+      rows.forEach(row => { // parcourt chaque ligne d'article
+        const mid = row.getAttribute('data-mat-id'); // id de l'article (materiel)
+        const input = row.querySelector('input[data-mat-id]'); // champ quantité de la ligne
+        const centralBadge = document.getElementById('central-stock-'+mid); // badge stock central C:
+        const magasinBadge = document.getElementById('magasin-stock-'+mid); // badge stock magasin M:
+        // Réinitialisations visuelles avant fetch
+        if (centralBadge) { centralBadge.textContent = '…'; centralBadge.classList.remove('bg-primary','bg-danger'); centralBadge.classList.add('bg-secondary'); }
+        if (magasinBadge) { magasinBadge.textContent = gid ? '…' : '—'; magasinBadge.classList.remove('bg-primary','bg-danger'); magasinBadge.classList.add('bg-secondary'); }
+        if (input) { input.removeAttribute('max'); input.placeholder = '0'; }
+
+        // API — Stock central (route: app_mouvement_stock_for_materiel)
+        fetch('{{ path('app_mouvement_stock_for_materiel', { id: 'MID_C' }) }}'.replace('MID_C', mid)) // appelle l'API stock central
+          .then(r => r.json()) // parse le JSON
+          .then(d => { // données de réponse
+            const c = parseInt((d && d.stock) || 0, 10); // entier: stock central
+            if (centralBadge) { centralBadge.textContent = String(c); setBadgeColor(centralBadge, c); }
+            if (input && action === 'ajout') { // si action 'ajout' (SORTIE)
+              input.setAttribute('max', Math.max(1, c)); // fixe le max selon stock central (min 1)
+              input.placeholder = 'max '+c; // placeholder explicite
+            }
+          })
+          .catch(() => { if (centralBadge) { centralBadge.textContent = '—'; centralBadge.classList.remove('bg-primary','bg-danger'); centralBadge.classList.add('bg-secondary'); } }); // en cas d'erreur: badge neutre
+
+        // API — Stock magasin (route: app_mouvement_stock_magasin) — uniquement si un magasin est sélectionné
+        if (gid) { // un magasin est sélectionné → on récupère son stock pour l'article
+          const url = '{{ path('app_mouvement_stock_magasin', { magasinId: 'GID', materielId: 'MID_M' }) }}'
+            .replace('GID', gid).replace('MID_M', mid); // construit l'URL avec les identifiants dynamiques
+          fetch(url)
+            .then(r => r.json()) // récupère le JSON { stock }
+            .then(d => {
+              const m = parseInt((d && d.stock) || 0, 10); // stock du magasin pour l'article (entier)
+              if (magasinBadge) { magasinBadge.textContent = String(m); setBadgeColor(magasinBadge, m); }
+              if (input && action === 'retour') { // en mode 'retour', la quantité max est le stock magasin
+                input.setAttribute('max', Math.max(1, m)); // borne supérieure de saisie basée sur m (min 1)
+                input.placeholder = 'max '+m; // aide visuelle pour l'utilisateur
+              }
+            })
+            .catch(() => { if (magasinBadge) { magasinBadge.textContent = '—'; magasinBadge.classList.remove('bg-primary','bg-danger'); magasinBadge.classList.add('bg-secondary'); } }); // en cas d'erreur: badge neutre
+        }
+      });
+    }
+
+    const initialAction = '{{ app.request.query.get('action')|default('') }}'; // action depuis l'URL si présente
+    if (initialAction) {
+      setAction(initialAction); // applique l'action initiale
+    } else {
+      setAction('ajout'); // défaut: 'ajout'
+    }
+
+    // Flux — Mise à jour initiale et sur changement de magasin
+    updateStocks(); // mise à jour des stocks au chargement
+    if (magasinSelect) {
+      magasinSelect.addEventListener('change', updateStocks); // rafraîchit lors du changement de magasin
+    }
+  });
+</script>
+{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center"> {# grille Bootstrap: centre la carte #}
+  <div class="col-12 col-md-10 col-lg-8 col-xl-6"> {# colonne responsive #}
+    <div class="card p-3"> {# carte contenant le formulaire #}
+      <h1 class="h5 mb-2">{{ is_edit ? 'Modifier un mouvement' : 'Enregistrer un mouvement' }}</h1> {# titre contextuel #}
+      {% set actionParam = app.request.query.get('action')|default('') %} {# action actuelle depuis l’URL #}
+      {% set compact = actionParam in ['retour','ajout','central'] %} {# mode compact si action définie #}
+      {% if actionParam == 'central' %}
+        <div class="mb-3"><span class="badge text-bg-primary"><i class="bi bi-plus-circle"></i> Approvisionnement central</span></div> {# badge d’info #}
+      {% elseif actionParam == 'retour' %}
+        <div class="mb-3"><span class="badge text-bg-danger"><i class="bi bi-reply"></i> Retour magasin</span></div>
+      {% elseif actionParam == 'ajout' %}
+        <div class="mb-3"><span class="badge text-bg-secondary"><i class="bi bi-box-arrow-in-right"></i> Ajout vers magasin</span></div>
+      {% endif %}
+      {# Barre d’actions — permet de fixer rapidement le mode de saisie #}
+      <div class="d-flex gap-2 mb-3">
+        <a class="btn btn-outline-primary" href="{{ path('app_mouvement_new', {'action':'central'}) }}"><i class="bi bi-plus-circle"></i> Approvisionnement central</a>
+        <a class="btn btn-outline-danger" href="{{ path('app_mouvement_new', {'action':'retour'}) }}"><i class="bi bi-reply"></i> Retour magasin</a>
+        <a class="btn btn-outline-secondary" href="{{ path('app_mouvement_new', {'action':'ajout'}) }}"><i class="bi bi-box-arrow-in-right"></i> Ajout vers magasin</a>
+      </div>
+      {# Formulaire principal (render_rest désactivé en fin) #}
+      {{ form_start(form) }} {# balise <form> #}
+        <input type="hidden" name="_action" id="formAction" value="{{ actionParam }}" /> {# action courante pour le contrôleur #}
+        <div class="row g-3"> {# rangée de champs #}
+          <div class="col-12 {{ compact ? 'd-none' : '' }}">
+            {# Type de mouvement — visible hors mode compact #}
+            {{ form_row(form.typeMouvement, {
+              'attr': {
+                'disabled': (is_edit and (form.magasin.vars.value is empty)) ? 'disabled' : false
+              }
+            }) }} {# ENTREE/SORTIE #}
+          </div>
+          <div class="col-12" data-field="magasin">
+            {# Magasin — requis pour retour/ajout, masqué pour central #}
+            {{ form_row(form.magasin, {'attr': {'disabled': is_edit ? 'disabled' : false}}) }} {# select magasin #}
+          </div>
+          <div class="col-12">
+            {% if not is_edit %}
+              <div class="table-responsive"> {# tableau des articles #}
+                <table class="table table-sm table-hover mb-0 table-striped table-bordered border-light"> {# style #}
+                  <thead> {# en-tête #}
+                    <tr>
+                      <th>Code article</th> {# code article #}
+                      <th>Nom article</th> {# nom article #}
+                      <th>Stock hub dispo/mag affectéé</th> {# badges C/M #}
+                      <th class="text-end">Quantité</th> {# input quantité #}
+                    </tr>
+                  </thead>
+                  <tbody> {# corps du tableau #}
+                    {% for m in materiels %}
+                      <tr data-mat-id="{{ m.id }}"> {# ligne d’un article #}
+                        <td><span class="badge badge-code">{{ m.codeArticle }}</span></td> {# code #}
+                        <td>
+                          {{ m.nom }} <br> 
+                          <span class="badge badge-code">{{ m.description }}</span> <br>
+                        </td>
+                        <td>
+                          {# Indicateurs de stock: central et magasin (si applicable) #}
+                          <div class="d-flex gap-2 align-items-center">
+                            <span class="small text-muted">Hub:</span>
+                            <span class="badge bg-secondary" id="central-stock-{{ m.id }}">—</span>
+                            <span class="small text-muted">Mag:</span>
+                            <span class="badge bg-secondary" id="magasin-stock-{{ m.id }}">—</span>
+                          </div>
+                        </td>
+                        <td class="text-end" style="max-width:120px;"> {# cellule quantité #}
+                          {# Saisie des quantités par article — max ajusté par JS selon l’action #}
+                          <input type="number" name="quantites[{{ m.id }}]" min="0" class="form-control form-control-sm" placeholder="0" data-mat-id="{{ m.id }}" /> {# input quantité #}
+                        </td>
+                      </tr>
+                    {% else %}
+                      <tr> {# état vide #}
+                        <td colspan="3" class="text-muted">Aucun matériel</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              {# Mode édition — formulaire unitaire classique #}
+              {{ form_row(form.materiel) }} {# select article #}
+              {{ form_row(form.quantiteMouvement) }} {# quantité unitaire #}
+            {% endif %}
+          </div>
+        </div>
+        {# CSRF token explicite car render_rest est désactivé #}
+        {{ form_row(form._token) }} {# protection formulaire #}
+        <div class="mt-3 d-flex gap-2 {{ compact ? 'd-none' : '' }}">
+          <button class="btn btn-primary ms-auto" type="submit">{{ is_edit ? 'Mettre à jour' : 'Enregistrer' }}</button> {# CTA principal #}
+        </div>
+        {% if compact %}
+          <div class="mt-3 d-flex"> {# CTA en mode compact #}
+          <button class="btn btn-primary ms-auto" type="submit">{{ is_edit ? 'Mettre à jour' : 'Enregistrer' }}</button>
+          </div>
+        {% endif %}
+      {{ form_end(form, {'render_rest': false}) }} {# fermeture du formulaire #}
+    </div>
+  </div>
+</div>
+{% endblock %}

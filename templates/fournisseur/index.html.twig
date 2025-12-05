@@ -1,0 +1,105 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Fournisseurs{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .page-hero { display:flex; gap:12px; align-items:flex-end; }
+    .hero-img { position:relative; flex:1; height:240px; border-radius:14px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,.08); }
+    .hero-img img { width:100%; height:100%; object-fit:cover; filter:saturate(115%) contrast(105%); transition: transform .35s ease-out; will-change: transform; }
+    .hero-img::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(0,0,0,.35), rgba(0,0,0,.05)); transition: transform .35s ease-out; }
+    .hero-label { position:absolute; left:16px; bottom:14px; color:#fff; font-weight:700; font-size:1.6rem; display:flex; gap:8px; align-items:center; text-shadow:0 1px 2px rgba(0,0,0,.3); transition: transform .35s ease-out; background: linear-gradient(90deg, var(--brand-blue), var(--brand-red)); padding: 6px 12px; border-radius: 10px; }
+    .page-hero:hover .hero-img img { transform: scale(1.08); }
+    .page-hero:hover .hero-img::after { transform: translateY(-4px); }
+    .page-hero:hover .hero-label { transform: translateY(-2px); }
+    .hero-action { align-self:flex-end; height:44px; border-radius:10px; }
+  </style>
+{% endblock %}
+{% block body %}
+<div class="page-hero mb-3">
+  <div class="hero-img">
+    <img src="{{ asset('images/fournisseur.jpg') }}" alt="Fournisseurs">
+    <div class="hero-label"><i class="bi bi-people"></i> Fournisseurs</div>
+  </div>
+  <a href="{{ path('app_fournisseur_new') }}" class="btn btn-warning hero-action">Nouveau</a>
+</div>
+
+<div class="alert alert-dark mb-3">
+  <div class="small">
+    Utilisez la barre de recherche pour filtrer par code ou nom. La recherche est insensible à la casse et accepte les correspondances partielles. Le bouton <span class="text-danger">Rechercher</span> applique le filtre, le bouton 
+    <i class="bi bi-x-lg text-danger"></i> réinitialise. Les actions à droite permettent de modifier ou supprimer. <span class="text-danger">La suppression est refusée si des matériels sont liés au fournisseur.</span>
+  </div>
+</div>
+
+<form method="get" class="card p-3 mb-3">
+  <div class="row g-2">
+    <div class="col-12">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" name="q" value="{{ q|default('') }}" class="form-control" placeholder="Rechercher un fournisseur (code, nom)..." autocomplete="off">
+        <button class="btn btn-warning" type="submit">Rechercher</button>
+        {% if q|default('') %}
+            <a class="btn btn-outline-secondary" href="{{ path('app_fournisseur_index') }}"><i class="bi bi-x-lg"></i></a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 table-striped table-bordered border-light">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Nom</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in fournisseurs %}
+                    <tr>
+                        <td>{{ f.codeFournisseur }}</td>
+                        <td>{{ f.nomFournisseur }}</td>
+                        <td class="text-end">
+                          <a href="{{ path('app_fournisseur_edit', {'id': f.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                          <form method="post" action="{{ path('app_fournisseur_delete', {'id': f.id}) }}" class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_fournisseur_' ~ f.id) }}">
+                            {% set linkedCount = f.materiels|length %}
+                            <button class="btn btn-sm btn-danger js-delete-btn" type="submit" {% if linkedCount > 0 %}disabled title="Suppression interdite: {{ linkedCount }} article(s) lié(s)"{% endif %}>Supprimer</button>
+                          </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="3" class="text-muted">Aucun fournisseur</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="d-flex justify-content-end mt-3 gap-2">
+  {% set nextPage = page + 1 %}
+  {% set prevPage = page > 1 ? page - 1 : 1 %}
+  <a class="btn btn-outline-secondary btn-sm" href="{{ path('app_fournisseur_index', app.request.query.all | merge({'page': prevPage})) }}">
+    <i class="bi bi-chevron-left"></i> Précédent
+  </a>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ path('app_fournisseur_index', app.request.query.all | merge({'page': nextPage})) }}">
+    Suivant <i class="bi bi-chevron-right"></i>
+  </a>
+</div>
+{% endblock %}
+{#
+  Fichier: fournisseurs/index
+  Objet: Liste, recherche et actions sur les fournisseurs.
+    Sections:
+    - En-tête avec boutons d'action
+    - Encart d'explication
+    - Barre de recherche
+    - Tableau des fournisseurs
+    - Pagination
+  Notes: la suppression est protégée si des matériels sont liés.
+#}

@@ -1,0 +1,120 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mouvements{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .page-hero { display:flex; gap:12px; align-items:flex-end; }
+    .hero-img { position:relative; flex:1; height:240px; border-radius:14px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,.08); }
+    .hero-img img { width:100%; height:100%; object-fit:cover; filter:saturate(115%) contrast(105%); transition: transform .35s ease-out; will-change: transform; }
+    .hero-img::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(0,0,0,.35), rgba(0,0,0,.05)); transition: transform .35s ease-out; }
+    .hero-label { position:absolute; left:16px; bottom:14px; color:#fff; font-weight:700; font-size:1.6rem; display:flex; gap:8px; align-items:center; text-shadow:0 1px 2px rgba(0,0,0,.3); transition: transform .35s ease-out; background: linear-gradient(90deg, var(--brand-blue), var(--brand-red)); padding: 6px 12px; border-radius: 10px; }
+    .hero-action { align-self:flex-end; height:44px; border-radius:10px; }
+    .page-hero:hover .hero-img img { transform: scale(1.08); }
+    .page-hero:hover .hero-img::after { transform: translateY(-4px); }
+    .page-hero:hover .hero-label { transform: translateY(-2px); }
+  </style>
+{% endblock %}
+{% block body %}
+<div class="page-hero mb-3">
+  <div class="hero-img">
+    <img src="{{ asset('images/store.jpg') }}" alt="Mouvements">
+    <div class="hero-label"><i class="bi bi-arrow-left-right"></i> Mouvements de stock</div>
+  </div>
+  <a href="{{ path('app_mouvement_new') }}" class="btn btn-warning hero-action">Nouveau</a>
+</div>
+
+<div class="alert alert-dark mb-3">
+    <div class="small">
+      Recherchez par matériel, magasin ou type de mouvement. Si vous saisissez un nombre, le filtre inclut la quantité. La recherche est insensible à la casse et partielle. Utilisez <span class="text-danger">Rechercher</span> pour filtrer et 
+      <i class="bi bi-x-lg text-danger"></i> pour revenir à la liste complète. Les actions à droite: 
+      <span class="text-danger">Retour</span> prépare une entrée (ENTREE) préremplie, <span class="text-danger">Ajout</span> ouvre l’édition pour un ajustement (SORTIE).
+    </div>
+</div>
+
+<form method="get" class="card p-3 mb-3">
+  <div class="row g-2">
+      <div class="col-12">
+        <div class="input-group">
+           <span class="input-group-text"><i class="bi bi-search"></i></span>
+           <input type="text" name="q" value="{{ q|default('') }}" class="form-control" placeholder="Rechercher un mouvement (matériel, magasin, type, quantité)..." autocomplete="off">
+           <button class="btn btn-warning" type="submit">Rechercher</button>
+           {% if q|default('') %}
+               <a class="btn btn-outline-secondary" href="{{ path('app_mouvement_index') }}"><i class="bi bi-x-lg"></i></a>
+           {% endif %}
+        </div>
+      </div>
+  </div>
+</form>
+
+ 
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm table-hover mb-0 table-striped table-bordered border-light">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Quantité</th>
+          <th>Matériel</th>
+          <th>Magasin</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for mv in mouvements %}
+        <tr>
+          <td>{{ mv.dateMouvement ? mv.dateMouvement|date('Y-m-d H:i') : '' }}</td>
+          <td>
+            {% if mv.typeMouvement == 'ENTREE' %}
+              <span class="badge text-bg-success">Entrée</span>
+            {% else %}
+              <span class="badge text-bg-danger">Sortie</span>
+            {% endif %}
+          </td>
+          <td>{{ mv.quantiteMouvement }}</td>
+          <td>
+            {{ mv.materiel ? mv.materiel.nom : '—' }} <br> 
+            <span class="badge badge-code">{{ mv.materiel.description }}</span>
+          </td>
+          <td>{{ mv.magasin ? mv.magasin.nomMagasin : '—' }}</td>
+          <td class="text-end">
+          <a href="{{ path('app_mouvement_new', {'action': 'retour', 'materiel': mv.materiel ? mv.materiel.id : null, 'magasin': mv.magasin ? mv.magasin.id : null}) }}" class="btn btn-sm btn-primary">Retourner</a>
+          <a href="{{ path('app_mouvement_edit', {'id': mv.id, 'action': 'ajout'}) }}" class="btn btn-sm btn-warning">Ajouter</a>
+          
+        </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="6" class="text-muted">Aucun mouvement</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+  <div class="text-muted small">
+    Page {{ page }} sur {{ totalPages }} ({{ total }} résultats)
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary btn-sm {{ page <= 1 ? 'disabled' : '' }}" 
+       href="{{ page > 1 ? path('app_mouvement_index', app.request.query.all | merge({'page': page - 1})) : '#' }}">
+      <i class="bi bi-chevron-left"></i> Précédent
+    </a>
+    <a class="btn btn-outline-secondary btn-sm {{ page >= totalPages ? 'disabled' : '' }}" 
+       href="{{ page < totalPages ? path('app_mouvement_index', app.request.query.all | merge({'page': page + 1})) : '#' }}">
+      Suivant <i class="bi bi-chevron-right"></i>
+    </a>
+  </div>
+</div>
+{% endblock %}
+{#
+  Fichier: mouvement_stock/index
+  Objet: Liste des mouvements ENTREE/SORTIE.
+  Sections: en-tête, explication, recherche, tableau, pagination.
+  Notes: saisir un nombre filtre la quantité.
+#}

@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Aide{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .help-card { border:1px solid #e7ecf6; border-radius:12px; background:#fff; box-shadow:0 1px 0 rgba(0,0,0,.02); }
+    .help-header { padding:12px 16px; border-bottom:1px solid #eef2fb; display:flex; align-items:center; gap:8px; }
+    .help-body { padding:12px 16px; color:#223; }
+    .help-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  </style>
+{% endblock %}
+
+{% block body %}
+<div class="row g-3">
+  <div class="col-12">
+    <div class="help-card">
+      <div class="help-header"><i class="bi bi-life-preserver"></i><div class="h5 m-0">Aide et onboarding</div></div>
+      <div class="help-body">
+        <div class="mb-2">Retrouvez ici des mini-guides et des liens rapides vers les fonctionnalités.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="help-card">
+      <div class="help-header"><i class="bi bi-arrow-left-right"></i><div class="h6 m-0">Mouvements</div></div>
+      <div class="help-body">
+        <div class="mb-2">Approvisionnement central augmente le stock central. Retour magasin ramène du stock depuis un magasin vers le central.</div>
+        <div class="help-actions">
+          <a class="btn btn-outline-primary" href="{{ path('app_mouvement_new', {'action':'central'}) }}"><i class="bi bi-plus-circle"></i> Approvisionnement central</a>
+          <a class="btn btn-outline-danger" href="{{ path('app_mouvement_new', {'action':'retour'}) }}"><i class="bi bi-reply"></i> Retour magasin</a>
+          <a class="btn btn-outline-secondary" href="{{ path('app_mouvement_new', {'action':'ajout'}) }}"><i class="bi bi-box-arrow-in-right"></i> Ajout vers magasin</a>
+          <a class="btn btn-light" href="{{ path('app_mouvement_index') }}"><i class="bi bi-list"></i> Voir tous les mouvements</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="help-card">
+      <div class="help-header"><i class="bi bi-box-seam"></i><div class="h6 m-0">Matériels</div></div>
+      <div class="help-body">
+        <div class="help-actions">
+          <a class="btn btn-outline-primary" href="{{ path('app_materiel_index') }}"><i class="bi bi-search"></i> Parcourir les matériels</a>
+          <a class="btn btn-light" href="{{ path('app_materiel_index') }}"><i class="bi bi-speedometer2"></i> Tableau de bord central</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="help-card">
+      <div class="help-header"><i class="bi bi-shop"></i><div class="h6 m-0">Magasins</div></div>
+      <div class="help-body">
+        <div class="help-actions">
+          <a class="btn btn-outline-primary" href="{{ path('app_magasin_index') }}"><i class="bi bi-search"></i> Parcourir les magasins</a>
+          <a class="btn btn-light" href="{{ path('app_stock_magasin_index') }}"><i class="bi bi-list-check"></i> Stock par magasin</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="help-card">
+      <div class="help-header"><i class="bi bi-people"></i><div class="h6 m-0">Fournisseurs</div></div>
+      <div class="help-body">
+        <div class="help-actions">
+          <a class="btn btn-outline-primary" href="{{ path('app_fournisseur_index') }}"><i class="bi bi-search"></i> Parcourir les fournisseurs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

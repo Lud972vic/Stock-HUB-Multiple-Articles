@@ -1,0 +1,88 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}État Stock Magasins{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .page-hero { display:flex; gap:12px; align-items:flex-end; }
+    .hero-img { position:relative; flex:1; height:240px; border-radius:14px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,.08); }
+    .hero-img img { width:100%; height:100%; object-fit:cover; filter:saturate(115%) contrast(105%); transition: transform .35s ease-out; will-change: transform; }
+    .hero-img::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(0,0,0,.35), rgba(0,0,0,.05)); transition: transform .35s ease-out; }
+    .hero-label { position:absolute; left:16px; bottom:14px; color:#fff; font-weight:700; font-size:1.6rem; display:flex; gap:8px; align-items:center; text-shadow:0 1px 2px rgba(0,0,0,.3); transition: transform .35s ease-out; background: linear-gradient(90deg, var(--brand-blue), var(--brand-red)); padding: 6px 12px; border-radius: 10px; }
+    .page-hero:hover .hero-img img { transform: scale(1.08); }
+    .page-hero:hover .hero-img::after { transform: translateY(-4px); }
+    .page-hero:hover .hero-label { transform: translateY(-2px); }
+  </style>
+{% endblock %}
+{% block body %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="page-hero mb-3">
+          <div class="hero-img">
+            <img src="{{ asset('images/store.jpg') }}" alt="Stock magasins">
+            <div class="hero-label"><i class="bi bi-list-check"></i> État du Stock par Magasin</div>
+          </div>
+        </div>
+        <div class="mb-3">
+            <div class="alert alert-dark mb-3">
+              <div class="small">
+                Recherchez par magasin, article ou code. Les résultats affichent les quantités en stock par couple magasin–article. La recherche est insensible à la casse et partielle. Cliquez sur <span class="text-danger">Rechercher</span> pour filtrer et 
+                <i class="bi bi-x-lg text-danger"></i> pour réinitialiser. Aucune action directe ici : utilisez la page <span class="text-danger">Mouvements</span> pour ajuster les stocks.
+              </div>
+            </div>
+        </div>
+
+        <form method="get" class="card p-3 mb-3">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" value="{{ q|default('') }}" class="form-control" placeholder="Rechercher (magasin, article, code)..." autocomplete="off">
+            <button class="btn btn-warning" type="submit">Rechercher</button>
+            {% if q|default('') %}
+                <a class="btn btn-outline-secondary" href="{{ path('app_stock_magasin_index') }}"><i class="bi bi-x-lg"></i></a>
+            {% endif %}
+          </div>
+        </form>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0 table-striped table-bordered border-light">
+                    <thead>
+                        <tr>
+                            <th>Magasin</th>
+                            <th>Code Article</th>
+                            <th>Désignation</th>
+                            <th class="text-end">Quantité en Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in stocks %}
+                            <tr>
+                                <td><span class="badge badge-code">{{ item.magasin }}</span></td>
+                                <td class="font-monospace">{{ item.code }}</td>
+                                <td>
+                                  {{ item.materiel }} <br> 
+                                  <span class="badge badge-code">{{ item.description }}</span> <br>
+                                </td>
+                                <td class="text-end fw-bold">{{ item.stock }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">
+                                    Aucun stock disponible dans les magasins.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{#
+  Fichier: stock_magasin/index
+  Objet: Vue des stocks par magasin et article.
+  Sections: en-tête, explication, recherche, tableau agrégé.
+  Actions: aucune, utiliser la page Mouvements pour les ajustements.
+#}

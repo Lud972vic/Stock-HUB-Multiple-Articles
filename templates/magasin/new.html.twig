@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ is_edit ? 'Modifier Magasin' : 'Nouveau Magasin' }}{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-10 col-lg-8 col-xl-6">
+    <div class="card p-3">
+      <h1 class="h5 mb-3">{{ is_edit ? 'Modifier un Magasin' : 'Créer un Magasin' }}</h1>
+      {{ form_start(form) }}
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="form-floating">
+              {{ form_widget(form.codeMagasin, {'attr': {'placeholder': 'Code'}}) }}
+              {{ form_label(form.codeMagasin) }}
+              {{ form_errors(form.codeMagasin) }}
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-floating">
+              {{ form_widget(form.nomMagasin, {'attr': {'placeholder': 'Nom'}}) }}
+              {{ form_label(form.nomMagasin) }}
+              {{ form_errors(form.nomMagasin) }}
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-floating">
+              {{ form_widget(form.ville, {'attr': {'placeholder': 'Ville'}}) }}
+              {{ form_label(form.ville) }}
+              {{ form_errors(form.ville) }}
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-floating">
+              {{ form_widget(form.centrale, {'attr': {'placeholder': 'Centrale'}}) }}
+              {{ form_label(form.centrale) }}
+              {{ form_errors(form.centrale) }}
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-floating">
+              {{ form_widget(form.statut, {'attr': {'placeholder': 'Statut'}}) }}
+              {{ form_label(form.statut) }}
+              {{ form_errors(form.statut) }}
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-floating">
+              {{ form_widget(form.typeProjet, {'attr': {'placeholder': 'Type de projet'}}) }}
+              {{ form_label(form.typeProjet) }}
+              {{ form_errors(form.typeProjet) }}
+            </div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <button class="btn btn-primary" type="submit">{{ is_edit ? 'Mettre à jour' : 'Enregistrer' }}</button>
+        </div>
+      {{ form_end(form) }}
+    </div>
+  </div>
+</div>
+{% endblock %}

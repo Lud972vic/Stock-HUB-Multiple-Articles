@@ -1,0 +1,109 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Magasins{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <style>
+    .page-hero { display:flex; gap:12px; align-items:flex-end; }
+    .hero-img { position:relative; flex:1; height:240px; border-radius:14px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,.08); }
+    .hero-img img { width:100%; height:100%; object-fit:cover; filter:saturate(115%) contrast(105%); transition: transform .35s ease-out; will-change: transform; }
+    .hero-img::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(0,0,0,.35), rgba(0,0,0,.05)); transition: transform .35s ease-out; }
+    .hero-label { position:absolute; left:16px; bottom:14px; color:#fff; font-weight:700; font-size:1.6rem; display:flex; gap:8px; align-items:center; text-shadow:0 1px 2px rgba(0,0,0,.3); transition: transform .35s ease-out; background: linear-gradient(90deg, var(--brand-blue), var(--brand-red)); padding: 6px 12px; border-radius: 10px; }
+    .page-hero:hover .hero-img img { transform: scale(1.08); }
+    .page-hero:hover .hero-img::after { transform: translateY(-4px); }
+    .page-hero:hover .hero-label { transform: translateY(-2px); }
+    .hero-action { align-self:flex-end; height:44px; border-radius:10px; }
+  </style>
+{% endblock %}
+{% block body %}
+<div class="page-hero mb-3">
+  <div class="hero-img">
+    <img src="{{ asset('images/magasin.jpg') }}" alt="Magasins">
+    <div class="hero-label"><i class="bi bi-shop"></i> Magasins</div>
+  </div>
+  <a href="{{ path('app_magasin_new') }}" class="btn btn-warning hero-action">Nouveau</a>
+</div>
+
+<div class="alert alert-dark mb-3">
+  <div class="small">
+    Recherchez par code, nom, ville, centrale, statut ou type de projet. La recherche est insensible à la casse et accepte les correspondances partielles. Cliquez sur <span class="text-danger">Rechercher</span> pour filtrer, utilisez 
+    <i class="bi bi-x-lg text-danger"></i> pour réinitialiser. Les actions à droite permettent de modifier ou supprimer, une confirmation s’affiche avant la suppression. <span class="text-danger">La suppression est refusée en cas de dépendances.</span>
+  </div>
+</div>
+
+ 
+
+<form method="get" class="card p-3 mb-3">
+  <div class="row g-2">
+     <div class="col-12">
+       <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" name="q" value="{{ q|default('') }}" class="form-control" placeholder="Rechercher un magasin (code, nom, ville, centrale, statut, type)..." autocomplete="off">
+          <button class="btn btn-warning" type="submit">Rechercher</button>
+          {% if q|default('') %}
+              <a class="btn btn-outline-secondary" href="{{ path('app_magasin_index') }}"><i class="bi bi-x-lg"></i></a>
+          {% endif %}
+       </div>
+     </div>
+  </div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm table-hover mb-0 table-striped table-bordered border-light">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Nom</th>
+          <th>Ville</th>
+          <th>Centrale</th>
+          <th>Statut</th>
+          <th>Type Projet</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for g in magasins %}
+          <tr>
+            <td><span class="badge badge-code">{{ g.codeMagasin }}</span></td>
+            <td>{{ g.nomMagasin }}</td>
+            <td>{{ g.ville ? g.ville.nomVille : '—' }}</td>
+            <td>{{ g.centrale ? g.centrale.nomCentrale : '—' }}</td>
+            <td>{{ g.statut ? g.statut.nomStatut : '—' }}</td>
+            <td>{{ g.typeProjet ? g.typeProjet.nomTypeProjet : '—' }}</td>
+            <td class="text-end">
+              <a href="{{ path('app_magasin_edit', {'id': g.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+              <form method="post" action="{{ path('app_magasin_delete', {'id': g.id}) }}" class="d-inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete_magasin_' ~ g.id) }}">
+                <button class="btn btn-sm btn-danger js-delete-btn" type="submit">Supprimer</button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="7" class="text-muted">Aucun magasin</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="d-flex justify-content-end mt-3 gap-2">
+  {% set nextPage = page + 1 %}
+  {% set prevPage = page > 1 ? page - 1 : 1 %}
+  <a class="btn btn-outline-secondary btn-sm" href="{{ path('app_magasin_index', app.request.query.all | merge({'page': prevPage})) }}">
+    <i class="bi bi-chevron-left"></i> Précédent
+  </a>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ path('app_magasin_index', app.request.query.all | merge({'page': nextPage})) }}">
+    Suivant <i class="bi bi-chevron-right"></i>
+  </a>
+</div>
+{% endblock %}
+{#
+  Fichier: magasin/index
+  Objet: Liste, recherche et actions sur les magasins.
+  Sections: en-tête, explication, recherche, tableau, pagination.
+  Colonnes recherchées: code, nom, ville, centrale, statut, type.
+#}

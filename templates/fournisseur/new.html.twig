@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ is_edit ? 'Modifier Fournisseur' : 'Nouveau Fournisseur' }}{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-10 col-lg-8 col-xl-6">
+    <div class="card p-3">
+      <h1 class="h5 mb-3">{{ is_edit ? 'Modifier un Fournisseur' : 'Créer un Fournisseur' }}</h1>
+      {{ form_start(form) }}
+        <div class="form-floating mb-3">
+          {{ form_widget(form.codeFournisseur, {'attr': {'placeholder': 'Code fournisseur'}}) }}
+          {{ form_label(form.codeFournisseur) }}
+          {{ form_errors(form.codeFournisseur) }}
+        </div>
+        <div class="form-floating mb-3">
+          {{ form_widget(form.nomFournisseur, {'attr': {'placeholder': 'Nom fournisseur'}}) }}
+          {{ form_label(form.nomFournisseur) }}
+          {{ form_errors(form.nomFournisseur) }}
+        </div>
+        <button class="btn btn-primary" type="submit">{{ is_edit ? 'Mettre à jour' : 'Enregistrer' }}</button>
+      {{ form_end(form) }}
+    </div>
+  </div>
+</div>
+{% endblock %}
